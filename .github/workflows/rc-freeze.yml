@@ -1,0 +1,29 @@
+name: Enforce Release Candidate Freeze
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  freeze-check:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Get latest RC tag
+        run: |
+          git fetch --tags
+          RC_TAG=$(git tag --list 'v*-rc.*' --sort=-version:refname | head -n 1)
+          echo "latest_rc=$RC_TAG" >> $GITHUB_ENV
+
+      - name: Block new features if RC is active
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          if [[ "$TITLE" == feat:* || "$TITLE" == feature:* ]]; then
+            if [[ -n "$latest_rc" ]]; then
+              echo "::error::Feature PRs are frozen during RC phase ($latest_rc)."
+              exit 1
+            fi
+          fi

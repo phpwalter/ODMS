@@ -1,0 +1,32 @@
+name-template: 'v$NEXT_PATCH_VERSION'
+tag-template: 'v$NEXT_PATCH_VERSION'
+categories:
+  - title: ⚠️ Breaking Changes
+    labels:
+      - breaking
+  - title: 🚀 Features
+    labels:
+      - feat
+      - feature
+  - title: 🐛 Bug Fixes
+    labels:
+      - fix
+  - title: 🛠 Internal
+    labels:
+      - chore
+      - refactor
+      - test
+
+change-template: '- $TITLE (#$NUMBER)'
+no-changes-template: 'No user-facing changes.'
+
+exclude-labels:
+  - skip-changelog
+
+template: |
+  ## What's Changed
+
+  $CHANGES
+
+  ## Contributors
+  Thanks to: $CONTRIBUTORS

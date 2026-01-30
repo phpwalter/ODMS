@@ -1,0 +1,29 @@
+name: Release Readiness Checklist
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  checklist:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Validate release description
+        run: |
+          BODY="${{ github.event.release.body }}"
+          REQUIRED=(
+            "🚀 Added"
+            "🐛 Fixed"
+            "📦 Deployment Notes"
+          )
+
+          for section in "${REQUIRED[@]}"; do
+            if ! grep -q "$section" <<< "$BODY"; then
+              echo "::error::Missing required release note section: $section"
+              exit 1
+            fi
+          done

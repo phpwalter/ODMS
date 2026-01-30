@@ -1,0 +1,24 @@
+name: Enforce Breaking Change Justification
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  breaking-check:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Check for 'breaking:' prefix
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          if [[ "$TITLE" == breaking:* ]]; then
+            BODY="${{ github.event.pull_request.body }}"
+            if [[ -z "$BODY" || "$BODY" == *"TBD"* ]]; then
+              echo "::error::PR includes breaking change but has no description."
+              exit 1
+            fi
+          fi
