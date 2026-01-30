@@ -1,0 +1,44 @@
+name: Milestone Dependency Guard
+on:
+  pull_request:
+    types: [opened, edited, synchronize, milestoned]
+
+jobs:
+  check-dependency:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Milestone Hierarchy
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pullRequest } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            if (!pullRequest.milestone) {
+              core.setFailed("No milestone assigned. All ODMS PRs must be linked to a Milestone.");
+              return;
+            }
+
+            const currentMilestoneTitle = pullRequest.milestone.title;
+            const milestoneHierarchy = ["M1", "M2", "M3", "M4", "M5"];
+            const currentIndex = milestoneHierarchy.findIndex(m => currentMilestoneTitle.startsWith(m));
+
+            if (currentIndex > 0) {
+              const previousMilestoneTitle = milestoneHierarchy[currentIndex - 1];
+            
+              // Search for the previous milestone to check its status
+              const { data: milestones } = await github.rest.issues.listMilestones({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open'
+              });
+
+              const prevMilestoneOpen = milestones.find(m => m.title.startsWith(previousMilestoneTitle));
+
+              if (prevMilestoneOpen) {
+                core.setFailed(`Dependency Block: ${currentMilestoneTitle} cannot be merged until ${previousMilestoneTitle} is closed.`);
+              }
+            }
