@@ -1,0 +1,36 @@
+name: Label Released Issues
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Label issues and PRs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const release = context.payload.release;
+            const commits = await github.rest.repos.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: release.tag_name,
+            });
+
+            for (const commit of commits.data) {
+              const prs = await github.rest.search.issuesAndPullRequests({
+                q: `${commit.sha} repo:${context.repo.owner}/${context.repo.repo}`
+              });
+
+              for (const item of prs.data.items) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: item.number,
+                  labels: ["release"]
+                });
+              }
+            }
